@@ -62,6 +62,7 @@
 @synthesize OAuth2RefreshToken = _OAuth2RefreshToken;
 @synthesize queue = _queue;
 @synthesize reachabilityObserver = _reachabilityObserver;
+@synthesize networkTimeoutInterval = _networkTimeoutInterval;
 
 #if TARGET_OS_IPHONE
 @synthesize backgroundPolicy = _backgroundPolicy, backgroundTaskIdentifier = _backgroundTaskIdentifier;
@@ -330,6 +331,22 @@
     }
 }
 
+- (void) networkDidTimeout {
+    RKLogDebug(@"NetworkDidTimeout after %f seconds", _networkTimeoutInterval);
+    
+    NSString* errorMessage = [NSString stringWithFormat:@"The client timed out contacting the resource at %@ after %f seconds", [[self URL] absoluteString], _networkTimeoutInterval];
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:errorMessage, NSLocalizedDescriptionKey,nil];
+    NSError* error = [NSError errorWithDomain:RKRestKitErrorDomain code:RKObjectLoaderTimeoutError userInfo:userInfo];
+    
+    [self didFailLoadWithError:error]; // removal from queue done in here.
+    
+    [self cancelAndInformDelegate:YES];
+    
+    if ([_delegate respondsToSelector:@selector(requestDidTimeout:)]) {
+        [_delegate requestDidTimeout:self];
+    }
+}
+
 - (void)fireAsynchronousRequest {
     RKLogDebug(@"Sending asynchronous %@ request to URL %@.", [self HTTPMethod], [[self URL] absoluteString]);
     if (![self prepareURLRequest]) {
@@ -344,6 +361,8 @@
     }
     
     RKResponse* response = [[[RKResponse alloc] initWithRequest:self] autorelease];
+    if (_networkTimeoutInterval) 
+        [self performSelector:@selector(networkDidTimeout) withObject:nil afterDelay:_networkTimeoutInterval];
     
     _connection = [[NSURLConnection connectionWithRequest:_URLRequest delegate:response] retain];
     

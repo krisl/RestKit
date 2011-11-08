@@ -99,6 +99,7 @@ typedef enum {
 	NSURL *_URL;
 	NSMutableURLRequest *_URLRequest;
 	NSURLConnection *_connection;
+    NSTimeInterval _networkTimeoutInterval;
 	NSDictionary *_additionalHTTPHeaders;
 	NSObject<RKRequestSerializable> *_params;
 	NSObject<RKRequestDelegate> *_delegate;
@@ -172,6 +173,11 @@ typedef enum {
  * The underlying NSMutableURLRequest sent for this request
  */
 @property(nonatomic, readonly) NSMutableURLRequest *URLRequest;
+
+/**
+ * The timeout interval within which we expect to have received a response.
+ */
+@property (nonatomic, assign) NSTimeInterval networkTimeoutInterval;
 
 /**
  * The HTTP method as a string used for this request

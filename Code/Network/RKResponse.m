@@ -200,10 +200,16 @@ extern NSString* cacheURLKey;
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
 	RKLogTrace(@"Read response body: %@", [self bodyAsString]);
+    if (_request.networkTimeoutInterval) 
+        [NSObject cancelPreviousPerformRequestsWithTarget:_request selector:@selector(networkDidTimeout) object:nil];
+    
 	[_request didFinishLoad:self];
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    if (_request.networkTimeoutInterval) 
+        [NSObject cancelPreviousPerformRequestsWithTarget:_request selector:@selector(networkDidTimeout) object:nil];
+    
 	_failureError = [error retain];
 	[_request didFailLoadWithError:_failureError];
 }
